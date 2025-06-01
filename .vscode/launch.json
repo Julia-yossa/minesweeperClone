@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "type": "java",
+            "name": "Launch App",
+            "request": "launch",
+            "mainClass": "App", // Or "com.yourpackage.App" if you have a package
+            "projectName": "MinesweeperFX_83c3017d", // Match your project name here
+
+            // --- IMPORTANT FOR JAVAFX ---
+            "vmArgs": "--module-path \"C:\\javafx-sdk-21.0.7\\lib\" --add-modules javafx.controls,javafx.fxml,javafx.graphics",
+            // OR (if using Maven, let Maven handle the module path):
+            // "vmArgs": "--add-modules javafx.controls,javafx.fxml,javafx.graphics",
+            // And ensure your pom.xml has the javafx-maven-plugin configured to include the module-path
+
+            // If you're managing JavaFX SDK manually (less common with Maven/Gradle),
+            // replace ${workspaceFolder}/lib with the actual path to your JavaFX SDK's lib folder:
+            // "vmArgs": "--module-path \"/path/to/javafx-sdk/lib\" --add-modules javafx.controls,javafx.fxml,javafx.graphics"
+        }
+    ]
+}
