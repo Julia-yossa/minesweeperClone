@@ -2,6 +2,7 @@
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -11,6 +12,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import java.util.Random;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane; // We'll use this for layout
+import javafx.util.Duration;
 
 public class App extends Application {
 
@@ -29,6 +35,11 @@ public class App extends Application {
     private boolean gameOver = false;
 
     private GridPane gridPane; // To hold our buttons
+
+     // --- Timer Variables ---
+    private Timeline timeline;
+    private Label timerLabel;
+    private int secondsElapsed;
 
     // Inner class to represent a single cell on the board
     private class Cell extends StackPane {
@@ -126,14 +137,22 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        setupTimer(); // Initialize timer
+
         gridPane = new GridPane();
         gridPane.setPadding(new Insets(10));
-        gridPane.setHgap(2); // Small gap between cells
+        gridPane.setHgap(2);
         gridPane.setVgap(2);
 
-        initializeBoard(); // Call our board setup method
+        initializeBoard();
 
-        Scene scene = new Scene(gridPane, BOARD_SIZE * CELL_SIZE + 20, BOARD_SIZE * CELL_SIZE + 20); // Add padding
+        BorderPane root = new BorderPane(); // New root layout
+        root.setTop(timerLabel); // Place timer at the top
+        BorderPane.setAlignment(timerLabel, Pos.CENTER); // Center the timer label
+        BorderPane.setMargin(timerLabel, new Insets(10)); // Add some margin
+        root.setCenter(gridPane); // Place game board in the center
+
+        Scene scene = new Scene(root, BOARD_SIZE * CELL_SIZE + 20, BOARD_SIZE * CELL_SIZE + 60); // Adjusted height for timer
         primaryStage.setTitle("Minesweeper!");
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
@@ -203,18 +222,18 @@ public class App extends Application {
     // --- Event Handlers (to be implemented) ---
     private void handleLeftClick(Cell cell) {
         if (cell.isRevealed() || cell.isFlagged() || gameOver) {
-            return; // Do nothing if already revealed, flagged, or game is over
+            return;
         }
 
         if (firstClick) {
-            // Re-place mines to ensure first click is never a mine and is a 0
             ensureFirstClickSafe(cell.getRow(), cell.getCol());
             firstClick = false;
+            timeline.play(); // Start the timer on the first click!
         }
 
         if (cell.isMine()) {
-            cell.setRevealed(true); // Show the mine
-            gameOver(false); // Game over - lost
+            cell.setRevealed(true);
+            gameOver(false);
             return;
         }
 
@@ -310,14 +329,15 @@ public class App extends Application {
 
     private void gameOver(boolean won) {
         gameOver = true;
-        String message = won ? "Congratulations! You won!" : "Game Over! You hit a mine.";
+        timeline.stop(); // Stop the timer when the game ends!
+
+        String message = won ? "Congratulations! You won in " + secondsElapsed + " seconds!" : "Game Over! You hit a mine.";
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("Game Over");
         alert.setHeaderText(null);
         alert.setContentText(message + "\n\nClick OK to restart.");
         alert.showAndWait();
 
-        // Restart the game
         resetGame();
     }
 
@@ -326,6 +346,9 @@ public class App extends Application {
         gameOver = false;
         revealedCells = 0;
         flagsPlaced = 0;
+        timeline.stop(); // Stop the timer in case it was running
+        secondsElapsed = 0; // Reset seconds
+        timerLabel.setText("Time: 0"); // Update label
 
         // Clear existing mines and states
         for (int r = 0; r < BOARD_SIZE; r++) {
@@ -341,6 +364,18 @@ public class App extends Application {
         }
         // Mines and counts will be placed after the first click
         // For now, no mines are placed
+    }
+
+    private void setupTimer() {
+        timerLabel = new Label("Time: 0");
+        timerLabel.setFont(new Font(20)); // Make it visible
+
+        secondsElapsed = 0;
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+            secondsElapsed++;
+            timerLabel.setText("Time: " + secondsElapsed);
+        }));
+        timeline.setCycleCount(Timeline.INDEFINITE); // Run indefinitely
     }
 
 
