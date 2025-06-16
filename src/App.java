@@ -17,6 +17,8 @@ import javafx.animation.Timeline;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane; // We'll use this for layout
 import javafx.util.Duration;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class App extends Application {
 
@@ -35,6 +37,12 @@ public class App extends Application {
     private boolean gameOver = false;
 
     private GridPane gridPane; // To hold our buttons
+    // --- Image Resources ---
+    private Image mineImage;
+    private Image flagImage;
+    private Image boomImage; // For the mine you hit
+    private Image winAlertImage; // Optional: for win/lose alert
+    private Image loseAlertImage; // Optional: for win/lose alert
 
      // --- Timer Variables ---
     private Timeline timeline;
@@ -86,9 +94,11 @@ public class App extends Application {
             if (revealed) {
                 // Change appearance when revealed
                 button.setStyle("-fx-background-color: #e0e0e0; -fx-border-color: #d0d0d0; -fx-border-width: 1;");
+                button.setGraphic(null); // Clear any existing graphic (like a flag)
+                button.setText("");
+
                 if (isMine) {
-                    button.setText("M"); // Or use an icon for mine
-                    button.setStyle("-fx-background-color: red; -fx-border-color: #d0d0d0; -fx-border-width: 1;");
+                   button.setGraphic(new ImageView(mineImage));
                 } else if (mineCount > 0) {
                     button.setText(String.valueOf(mineCount));
                     // Style numbers differently
@@ -110,6 +120,7 @@ public class App extends Application {
             } else {
                 // Reset to unrevealed style
                 button.setStyle("-fx-background-color: #a0a0a0; -fx-border-color: #808080 #c0c0c0 #c0c0c0 #808080; -fx-border-width: 2;");
+                button.setGraphic(null);
                 button.setText(""); // Clear text if re-hiding (for reset)
             }
         }
@@ -118,9 +129,11 @@ public class App extends Application {
         public void setFlagged(boolean flagged) {
             isFlagged = flagged;
             if (flagged) {
-                button.setText("F"); // Or use an icon for flag
+                button.setGraphic(new ImageView(flagImage));
+                button.setText(""); // Or use an icon for flag
                 button.setStyle("-fx-background-color: #a0a0a0; -fx-border-color: #808080 #c0c0c0 #c0c0c0 #808080; -fx-border-width: 2; -fx-text-fill: orange;");
             } else {
+                button.setGraphic(null);
                 button.setText("");
                 // Reset style if unflagged
                 button.setStyle("-fx-background-color: #a0a0a0; -fx-border-color: #808080 #c0c0c0 #c0c0c0 #808080; -fx-border-width: 2;");
@@ -135,8 +148,11 @@ public class App extends Application {
         public int getCol() { return col; }
     }
 
+       
+
     @Override
     public void start(Stage primaryStage) {
+        loadImages();
         setupTimer(); // Initialize timer
 
         gridPane = new GridPane();
@@ -152,11 +168,29 @@ public class App extends Application {
         BorderPane.setMargin(timerLabel, new Insets(10)); // Add some margin
         root.setCenter(gridPane); // Place game board in the center
 
-        Scene scene = new Scene(root, BOARD_SIZE * CELL_SIZE + 20, BOARD_SIZE * CELL_SIZE + 60); // Adjusted height for timer
+        Scene scene = new Scene(root, BOARD_SIZE * CELL_SIZE + 38, BOARD_SIZE * CELL_SIZE + 90); // Adjusted height for timer
         primaryStage.setTitle("Minesweeper!");
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
+    }
+
+     private void loadImages() {
+        try {
+            // Use getClass().getResourceAsStream() for resources bundled with your JAR
+            mineImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\mine.png"), CELL_SIZE * 0.75, CELL_SIZE * 0.75, true, true);
+            flagImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\flag.png"), CELL_SIZE * 0.75, CELL_SIZE * 0.75, true, true);
+            boomImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\boom.png"), CELL_SIZE * 0.9, CELL_SIZE * 0.9, true, true); // Slightly larger for emphasis
+            winAlertImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\win.png")); // Full size for alert
+            loseAlertImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\lose.png")); // Full size for alert
+        } catch (NullPointerException e) {
+            System.err.println("Error loading image. Make sure 'resources' folder and image paths are correct.");
+            e.printStackTrace();
+            // Provide fallback text or handle the error gracefully
+            mineImage = null; // Set to null or a placeholder
+            flagImage = null;
+            boomImage = null;
+        }
     }
 
     // --- Game Logic Methods (to be implemented next) ---
@@ -233,6 +267,8 @@ public class App extends Application {
 
         if (cell.isMine()) {
             cell.setRevealed(true);
+            cell.button.setGraphic(new ImageView(boomImage));
+            cell.button.setStyle("-fx-background-color: red; -fx-border-color: #d0d0d0; -fx-border-width: 1;");
             gameOver(false);
             return;
         }
@@ -331,11 +367,42 @@ public class App extends Application {
         gameOver = true;
         timeline.stop(); // Stop the timer when the game ends!
 
+        if (!won) {
+        // If lost, reveal all mines (but only use the standard mine image)
+            for (int r = 0; r < BOARD_SIZE; r++) {
+                for (int c = 0; c < BOARD_SIZE; c++) {
+                    Cell currentCell = board[r][c];
+                    if (currentCell.isMine() && !currentCell.isRevealed()) { // Only reveal non-boom mines
+                        currentCell.setRevealed(true); // This will set the regular mine image
+                    } else if (currentCell.isFlagged() && !currentCell.isMine()) {
+                        // Optional: Indicate incorrectly placed flags
+                        currentCell.button.setText("X"); // Or a small red X image
+                        currentCell.button.setStyle("-fx-background-color: lightcoral; -fx-border-color: #d0d0d0; -fx-border-width: 1; -fx-text-fill: white;");
+                    }
+                }
+            }
+        }
+
+
         String message = won ? "Congratulations! You won in " + secondsElapsed + " seconds!" : "Game Over! You hit a mine.";
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("Game Over");
         alert.setHeaderText(null);
         alert.setContentText(message + "\n\nClick OK to restart.");
+
+        ImageView alertImageView = null;
+        if (won && winAlertImage != null) {
+            alertImageView = new ImageView(winAlertImage);
+        } else if (!won && loseAlertImage != null) {
+            alertImageView = new ImageView(loseAlertImage);
+        }
+
+        if (alertImageView != null) {
+            alertImageView.setFitWidth(100); // Adjust size as needed
+            alertImageView.setPreserveRatio(true);
+            alert.setGraphic(alertImageView);
+        }
+
         alert.showAndWait();
 
         resetGame();
