@@ -13,7 +13,7 @@
         "c:\\javafx-sdk-21.0.7\\lib\\javafx-swt.jar"
     ],
     "java.project.resourceFilters": [
-        "resources\\**" // This line tells VS Code to include everything in 'resources'
+        "resources/**" // This line tells VS Code to include everything in 'resources'
     ],
     "java.vmargs":[
         "--module-path",

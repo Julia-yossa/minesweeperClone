@@ -178,11 +178,11 @@ public class App extends Application {
      private void loadImages() {
         try {
             // Use getClass().getResourceAsStream() for resources bundled with your JAR
-            mineImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\mine.png"), CELL_SIZE * 0.75, CELL_SIZE * 0.75, true, true);
-            flagImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\flag.png"), CELL_SIZE * 0.75, CELL_SIZE * 0.75, true, true);
-            boomImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\boom.png"), CELL_SIZE * 0.9, CELL_SIZE * 0.9, true, true); // Slightly larger for emphasis
-            winAlertImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\win.png")); // Full size for alert
-            loseAlertImage = new Image(getClass().getResourceAsStream("..\\..\\resources\\lose.png")); // Full size for alert
+            mineImage = new Image(getClass().getResourceAsStream("resources/mine.png"), CELL_SIZE * 0.75, CELL_SIZE * 0.75, true, true);
+            flagImage = new Image(getClass().getResourceAsStream("resources/flag.png"), CELL_SIZE * 0.75, CELL_SIZE * 0.75, true, true);
+            boomImage = new Image(getClass().getResourceAsStream("resources/boom.png"), CELL_SIZE * 0.9, CELL_SIZE * 0.9, true, true); // Slightly larger for emphasis
+            winAlertImage = new Image(getClass().getResourceAsStream("resources/win.png")); // Full size for alert
+            loseAlertImage = new Image(getClass().getResourceAsStream("resources/lose.png")); // Full size for alert
         } catch (NullPointerException e) {
             System.err.println("Error loading image. Make sure 'resources' folder and image paths are correct.");
             e.printStackTrace();
